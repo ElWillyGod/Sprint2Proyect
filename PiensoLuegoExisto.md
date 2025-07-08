@@ -15,3 +15,6 @@ luego, buscar archivos cuyos nombres contengan la cadena ingresada como subcaden
 La concurrencia se aplicará principalmente en el proceso de carga o indexado de archivos también en la búsqueda (Pensar donde mas).
 
 la clave esta en la búsqueda, tiene que ser tan rápida que va a saber lo que queres buscar mañana.
+
+cargar los archivos en el B+ Tree con concurrencia.
+buscar en el B+ Tree, la coincidencia exacta del nombre, se busca de forma concurrente el nombre parcial.(posible implementacion de Suffix Tree para la busqueda parcial)
