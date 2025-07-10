@@ -18,3 +18,10 @@ la clave esta en la búsqueda, tiene que ser tan rápida que va a saber lo que q
 
 cargar los archivos en el B+ Tree con concurrencia.
 buscar en el B+ Tree, la coincidencia exacta del nombre, se busca de forma concurrente el nombre parcial.(posible implementacion de Suffix Tree para la busqueda parcial)
+
+
+implementacion del B+ Tree:
+las hojas van a tener todas las rutas de los archivos que tengan ese nombre.
+la clave tal vez sera la primera letra del nombre del archivo para la busqueda exacta.
+
+la ultima comparacion de las hojas es la que es parcial y exacta o todo el recorrido sera concurrente, un recorrido entero para buscar el nombre exacto y otro recorrido para buscar el nombre parcial.
