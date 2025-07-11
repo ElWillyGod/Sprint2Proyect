@@ -1,4 +1,4 @@
-package core
+package main
 
 /*
 Logica Principal del proyecto.
