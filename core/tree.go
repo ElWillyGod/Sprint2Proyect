@@ -13,7 +13,7 @@ Implementación de B+ Tree para almacenar los archivos y sus rutas.
 type Archivo struct {
 	NombreArchivo string // Ej: "nota.txt"
 	RutaCompleta  string // Ej: "/home/willy/docs/nota.txt"
-	EsDirectorio  bool   // true si es un directorio
+	// EsDirectorio eliminado ya que solo almacenamos archivos
 }
 
 type EntradaHoja struct {
@@ -48,21 +48,22 @@ func NuevoBPlusTree() *BPlusTree {
 	}
 }
 
-// sera dios
-// modificar para cargar las rutas de un archivo desde un JSON para probar
+// Carga solo archivos (no directorios) del directorio especificado
 func (tree *BPlusTree) CargarDirectorio(rutaDirectorio string) error {
 	return filepath.Walk(rutaDirectorio, func(ruta string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		archivo := Archivo{
-			NombreArchivo: info.Name(),
-			RutaCompleta:  ruta,
-			EsDirectorio:  info.IsDir(),
-		}
+		// Solo insertar archivos, ignorar directorios
+		if !info.IsDir() {
+			archivo := Archivo{
+				NombreArchivo: info.Name(),
+				RutaCompleta:  ruta,
+			}
 
-		tree.Insertar(archivo)
+			tree.Insertar(archivo)
+		}
 		return nil
 	})
 }
@@ -83,7 +84,7 @@ func (tree *BPlusTree) insertarEnNodo(nodo *Nodo, clave string, archivo Archivo)
 }
 
 func (tree *BPlusTree) insertarEnHoja(nodo *Nodo, clave string, archivo Archivo) {
-	// Buscar si la clave ya existe
+	// Buscar si la clave ya existestrings.ToLower
 	for i := range nodo.Entradas {
 		if nodo.Entradas[i].Clave == clave {
 			// Agregar archivo a la entrada existente

@@ -25,3 +25,7 @@ las hojas van a tener todas las rutas de los archivos que tengan ese nombre.
 la clave tal vez sera la primera letra del nombre del archivo para la busqueda exacta.
 
 la ultima comparacion de las hojas es la que es parcial y exacta o todo el recorrido sera concurrente, un recorrido entero para buscar el nombre exacto y otro recorrido para buscar el nombre parcial.
+
+solo las rutas, porque hacer distincion entre archivos y directorios
+
+batch insert -> tecnica de inserción por lotes para mejorar la velocidad de carga.

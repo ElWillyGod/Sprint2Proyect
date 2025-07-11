@@ -5,8 +5,8 @@ import (
 )
 
 /*
-Implementación de un buscador de archivos utilizando el B+ Tree.
-Dos tipos de búsqueda:
+Implementación simplificada de un buscador de archivos utilizando el B+ Tree.
+Solo dos tipos de búsqueda:
 1. Búsqueda exacta: se busca el nombre del archivo completo.
 2. Búsqueda parcial: se busca el nombre del archivo que contenga una subcadena.
 */
@@ -27,13 +27,13 @@ func NuevoBuscador(tree *BPlusTree) *Buscador {
 func (b *Buscador) BuscarExacto(nombreArchivo string) []Archivo {
 	clave := strings.ToLower(nombreArchivo)
 	nodo := b.tree.EncontrarHoja(clave)
-	
+
 	for _, entrada := range nodo.Entradas {
 		if entrada.Clave == clave {
 			return entrada.Archivos
 		}
 	}
-	
+
 	return nil
 }
 
@@ -41,7 +41,7 @@ func (b *Buscador) BuscarExacto(nombreArchivo string) []Archivo {
 func (b *Buscador) BuscarParcial(subcadena string) []Archivo {
 	var resultados []Archivo
 	subcadena = strings.ToLower(subcadena)
-	
+
 	// Recorrer todas las hojas usando los enlaces
 	nodoActual := b.tree.EncontrarPrimeraHoja()
 	for nodoActual != nil {
@@ -52,32 +52,14 @@ func (b *Buscador) BuscarParcial(subcadena string) []Archivo {
 		}
 		nodoActual = nodoActual.Siguiente
 	}
-	
-	return resultados
-}
 
-// Buscar archivos por prefijo
-func (b *Buscador) BuscarPorPrefijo(prefijo string) []Archivo {
-	var resultados []Archivo
-	prefijo = strings.ToLower(prefijo)
-	
-	nodoActual := b.tree.EncontrarPrimeraHoja()
-	for nodoActual != nil {
-		for _, entrada := range nodoActual.Entradas {
-			if strings.HasPrefix(entrada.Clave, prefijo) {
-				resultados = append(resultados, entrada.Archivos...)
-			}
-		}
-		nodoActual = nodoActual.Siguiente
-	}
-	
 	return resultados
 }
 
 // Obtener todos los archivos ordenados por nombre
 func (b *Buscador) ObtenerTodosLosArchivos() []Archivo {
 	var todosLosArchivos []Archivo
-	
+
 	nodoActual := b.tree.EncontrarPrimeraHoja()
 	for nodoActual != nil {
 		for _, entrada := range nodoActual.Entradas {
@@ -85,37 +67,12 @@ func (b *Buscador) ObtenerTodosLosArchivos() []Archivo {
 		}
 		nodoActual = nodoActual.Siguiente
 	}
-	
+
 	return todosLosArchivos
 }
 
+// Verificar si existe un archivo con el nombre especificado
 func (b *Buscador) ExisteArchivo(nombreArchivo string) bool {
 	archivos := b.BuscarExacto(nombreArchivo)
 	return len(archivos) > 0
-}
-
-func (b *Buscador) BuscarDirectorios(termino string) []Archivo {
-	var directorios []Archivo
-	archivos := b.BuscarParcial(termino)
-	
-	for _, archivo := range archivos {
-		if archivo.EsDirectorio {
-			directorios = append(directorios, archivo)
-		}
-	}
-	
-	return directorios
-}
-
-func (b *Buscador) BuscarSoloArchivos(termino string) []Archivo {
-	var soloArchivos []Archivo
-	archivos := b.BuscarParcial(termino)
-	
-	for _, archivo := range archivos {
-		if !archivo.EsDirectorio {
-			soloArchivos = append(soloArchivos, archivo)
-		}
-	}
-	
-	return soloArchivos
 }
