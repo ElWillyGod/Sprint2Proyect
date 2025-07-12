@@ -28,7 +28,7 @@ func NuevoWorkerBasico(numWorkers int) *WorkerBasico {
 	}
 }
 
-// CargarArchivos - carga archivos usando workers concurrentes
+// CargarArchivos - carga archivos usando workers concurrentes optimizado
 func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *EstadisticasBasicas, error) {
 	inicio := time.Now()
 	stats := &EstadisticasBasicas{}
@@ -38,19 +38,29 @@ func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *
 	archivosChan := make(chan core.Archivo, 1000)
 	var wg sync.WaitGroup
 
-	// Workers para procesar archivos
+	// Buffer para acumular archivos antes de insertar en lotes
+	const TAMAÑO_LOTE = 50
+	
+	// Workers para procesar archivos en lotes
 	for i := 0; i < w.numWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			lote := make([]core.Archivo, 0, TAMAÑO_LOTE)
+			
 			for archivo := range archivosChan {
-				w.mutex.Lock()
-				w.tree.Insertar(archivo)
-				w.mutex.Unlock()
-
-				statsMutex.Lock()
-				stats.TotalArchivos++
-				statsMutex.Unlock()
+				lote = append(lote, archivo)
+				
+				// Procesar lote cuando esté lleno
+				if len(lote) >= TAMAÑO_LOTE {
+					w.insertarLote(lote, stats, &statsMutex)
+					lote = lote[:0] // Limpiar sin reallocar
+				}
+			}
+			
+			// Procesar lote final si no está vacío
+			if len(lote) > 0 {
+				w.insertarLote(lote, stats, &statsMutex)
 			}
 		}()
 	}
@@ -66,6 +76,20 @@ func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *
 	wg.Wait()
 	stats.TiempoTotal = time.Since(inicio)
 	return w.tree, stats, nil
+}
+
+// Insertar un lote de archivos con una sola adquisición de mutex
+func (w *WorkerBasico) insertarLote(lote []core.Archivo, stats *EstadisticasBasicas, statsMutex *sync.Mutex) {
+	w.mutex.Lock()
+	for _, archivo := range lote {
+		w.tree.Insertar(archivo)
+	}
+	w.mutex.Unlock()
+	
+	// Actualizar estadísticas
+	statsMutex.Lock()
+	stats.TotalArchivos += len(lote)
+	statsMutex.Unlock()
 }
 
 // Mantener la función simple para compatibilidad
