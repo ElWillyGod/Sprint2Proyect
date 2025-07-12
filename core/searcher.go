@@ -55,24 +55,3 @@ func (b *Buscador) BuscarParcial(subcadena string) []Archivo {
 
 	return resultados
 }
-
-// Obtener todos los archivos ordenados por nombre
-func (b *Buscador) ObtenerTodosLosArchivos() []Archivo {
-	var todosLosArchivos []Archivo
-
-	nodoActual := b.tree.EncontrarPrimeraHoja()
-	for nodoActual != nil {
-		for _, entrada := range nodoActual.Entradas {
-			todosLosArchivos = append(todosLosArchivos, entrada.Archivos...)
-		}
-		nodoActual = nodoActual.Siguiente
-	}
-
-	return todosLosArchivos
-}
-
-// Verificar si existe un archivo con el nombre especificado
-func (b *Buscador) ExisteArchivo(nombreArchivo string) bool {
-	archivos := b.BuscarExacto(nombreArchivo)
-	return len(archivos) > 0
-}

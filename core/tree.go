@@ -7,13 +7,23 @@ import (
 )
 
 /*
-Implementación de B+ Tree para almacenar los archivos y sus rutas.
+Implementación completa de B+ Tree para almacenar los archivos y sus rutas.
+Con división de nodos y balanceo automático.
 */
+
+const (
+	// Orden del B+ Tree - máximo número de hijos por nodo interno
+	ORDEN = 4
+	// Máximo número de entradas por hoja
+	MAX_ENTRADAS_HOJA = ORDEN - 1
+	// Máximo número de claves por nodo interno  
+	MAX_CLAVES_INTERNO = ORDEN - 1
+)
 
 type Archivo struct {
 	NombreArchivo string // Ej: "nota.txt"
 	RutaCompleta  string // Ej: "/home/willy/docs/nota.txt"
-	// EsDirectorio eliminado ya que solo almacenamos archivos
+
 }
 
 type EntradaHoja struct {
@@ -48,47 +58,48 @@ func NuevoBPlusTree() *BPlusTree {
 	}
 }
 
-// Carga solo archivos (no directorios) del directorio especificado
-func (tree *BPlusTree) CargarDirectorio(rutaDirectorio string) error {
-	return filepath.Walk(rutaDirectorio, func(ruta string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Solo insertar archivos, ignorar directorios
-		if !info.IsDir() {
-			archivo := Archivo{
-				NombreArchivo: info.Name(),
-				RutaCompleta:  ruta,
-			}
-
-			tree.Insertar(archivo)
-		}
-		return nil
-	})
-}
-
 func (tree *BPlusTree) Insertar(archivo Archivo) {
-	clave := strings.ToLower(archivo.NombreArchivo) // puros problemas
-	tree.insertarEnNodo(tree.Raiz, clave, archivo)
-}
-
-func (tree *BPlusTree) insertarEnNodo(nodo *Nodo, clave string, archivo Archivo) {
-	if nodo.EsHoja {
-		tree.insertarEnHoja(nodo, clave, archivo)
-	} else {
-		// el hijo correcto
-		indice := tree.encontrarIndiceHijo(nodo, clave)
-		tree.insertarEnNodo(nodo.Hijos[indice], clave, archivo)
+	clave := strings.ToLower(archivo.NombreArchivo)
+	
+	// Si la raíz se divide, necesitamos crear una nueva raíz
+	nuevaClave, nuevoNodo := tree.insertarEnNodo(tree.Raiz, clave, archivo)
+	
+	if nuevoNodo != nil {
+		// La raíz se dividió, crear nueva raíz
+		nuevaRaiz := &Nodo{
+			EsHoja: false,
+			Claves: []string{nuevaClave},
+			Hijos:  []*Nodo{tree.Raiz, nuevoNodo},
+		}
+		tree.Raiz = nuevaRaiz
 	}
 }
 
-func (tree *BPlusTree) insertarEnHoja(nodo *Nodo, clave string, archivo Archivo) {
+// Retorna (clave promovida, nuevo nodo) si hay división, (nil, nil) si no
+func (tree *BPlusTree) insertarEnNodo(nodo *Nodo, clave string, archivo Archivo) (string, *Nodo) {
+	if nodo.EsHoja {
+		return tree.insertarEnHoja(nodo, clave, archivo)
+	} else {
+		// Encontrar el hijo correcto
+		indice := tree.encontrarIndiceHijo(nodo, clave)
+		clavePromovida, nuevoHijo := tree.insertarEnNodo(nodo.Hijos[indice], clave, archivo)
+		
+		if nuevoHijo != nil {
+			// El hijo se dividió, insertar la clave promovida en este nodo
+			return tree.insertarClaveEnInterno(nodo, clavePromovida, nuevoHijo, indice)
+		}
+		
+		return "", nil
+	}
+}
+
+// Retorna (clave promovida, nuevo nodo) si hay división, ("", nil) si no
+func (tree *BPlusTree) insertarEnHoja(nodo *Nodo, clave string, archivo Archivo) (string, *Nodo) {
 	// Buscar si la clave ya existe
 	for i, entrada := range nodo.Entradas {
 		if entrada.Clave == clave {
 			nodo.Entradas[i].Archivos = append(nodo.Entradas[i].Archivos, archivo)
-			return
+			return "", nil
 		}
 	}
 	
@@ -103,6 +114,13 @@ func (tree *BPlusTree) insertarEnHoja(nodo *Nodo, clave string, archivo Archivo)
 	nodo.Entradas = append(nodo.Entradas, EntradaHoja{})
 	copy(nodo.Entradas[posicion+1:], nodo.Entradas[posicion:])
 	nodo.Entradas[posicion] = nuevaEntrada
+	
+	// Verificar si necesita división
+	if len(nodo.Entradas) > MAX_ENTRADAS_HOJA {
+		return tree.dividirHoja(nodo)
+	}
+	
+	return "", nil
 }
 
 
@@ -113,6 +131,86 @@ func (tree *BPlusTree) encontrarPosicionInsercion(entradas []EntradaHoja, clave 
 		}
 	}
 	return len(entradas)
+}
+
+// Dividir una hoja cuando excede el máximo de entradas
+func (tree *BPlusTree) dividirHoja(nodo *Nodo) (string, *Nodo) {
+	medio := (len(nodo.Entradas) + 1) / 2
+	
+	// Crear nuevo nodo hermano
+	nuevoNodo := &Nodo{
+		EsHoja:    true,
+		Entradas:  make([]EntradaHoja, len(nodo.Entradas)-medio),
+		Siguiente: nodo.Siguiente,
+	}
+	
+	// Mover la mitad de las entradas al nuevo nodo
+	copy(nuevoNodo.Entradas, nodo.Entradas[medio:])
+	
+	// Mantener enlaces entre hojas
+	nodo.Siguiente = nuevoNodo
+	nodo.Entradas = nodo.Entradas[:medio]
+	
+	// La clave promovida es la primera clave del nuevo nodo
+	clavePromovida := nuevoNodo.Entradas[0].Clave
+	
+	return clavePromovida, nuevoNodo
+}
+
+// Insertar clave en nodo interno después de división de hijo
+func (tree *BPlusTree) insertarClaveEnInterno(nodo *Nodo, clave string, nuevoHijo *Nodo, indicePadre int) (string, *Nodo) {
+	// Insertar la clave en la posición correcta
+	posicion := tree.encontrarPosicionClaveInterna(nodo.Claves, clave)
+	
+	// Insertar clave
+	nodo.Claves = append(nodo.Claves, "")
+	copy(nodo.Claves[posicion+1:], nodo.Claves[posicion:])
+	nodo.Claves[posicion] = clave
+	
+	// Insertar hijo (después de la clave insertada)
+	nodo.Hijos = append(nodo.Hijos, nil)
+	copy(nodo.Hijos[posicion+2:], nodo.Hijos[posicion+1:])
+	nodo.Hijos[posicion+1] = nuevoHijo
+	
+	// Verificar si necesita división
+	if len(nodo.Claves) > MAX_CLAVES_INTERNO {
+		return tree.dividirInterno(nodo)
+	}
+	
+	return "", nil
+}
+
+// Dividir un nodo interno cuando excede el máximo de claves
+func (tree *BPlusTree) dividirInterno(nodo *Nodo) (string, *Nodo) {
+	medio := len(nodo.Claves) / 2
+	clavePromovida := nodo.Claves[medio]
+	
+	// Crear nuevo nodo hermano
+	nuevoNodo := &Nodo{
+		EsHoja: false,
+		Claves: make([]string, len(nodo.Claves)-medio-1),
+		Hijos:  make([]*Nodo, len(nodo.Hijos)-medio-1),
+	}
+	
+	// Mover claves e hijos al nuevo nodo
+	copy(nuevoNodo.Claves, nodo.Claves[medio+1:])
+	copy(nuevoNodo.Hijos, nodo.Hijos[medio+1:])
+	
+	// Truncar el nodo original
+	nodo.Claves = nodo.Claves[:medio]
+	nodo.Hijos = nodo.Hijos[:medio+1]
+	
+	return clavePromovida, nuevoNodo
+}
+
+// Encontrar posición para insertar clave en nodo interno
+func (tree *BPlusTree) encontrarPosicionClaveInterna(claves []string, clave string) int {
+	for i, c := range claves {
+		if clave < c {
+			return i
+		}
+	}
+	return len(claves)
 }
 
 
@@ -146,31 +244,6 @@ func (tree *BPlusTree) EncontrarPrimeraHoja() *Nodo {
 		nodo = nodo.Hijos[0]
 	}
 	return nodo
-}
-
-// Carga de archivos por lotes usando os.ReadDir
-func (tree *BPlusTree) CargarPorLotes(rutaDirectorio string, tamañoLote int) error {
-	var lote []Archivo
-	return tree.procesarDirectorioLotes(rutaDirectorio, tamañoLote, &lote)
-}
-
-func (tree *BPlusTree) procesarDirectorioLotes(rutaDir string, tamañoLote int, lote *[]Archivo) error {
-	return RecorrerDirectorio(rutaDir, func(archivo Archivo) {
-		*lote = append(*lote, archivo)
-		
-		// Si el lote está lleno, procesarlo
-		if len(*lote) >= tamañoLote {
-			tree.insertarLote(*lote)
-			*lote = (*lote)[:0] // Limpiar lote sin reallocar
-		}
-	})
-}
-
-// Insertar un lote completo de archivos
-func (tree *BPlusTree) insertarLote(archivos []Archivo) {
-	for _, archivo := range archivos {
-		tree.Insertar(archivo)
-	}
 }
 
 // Función genérica de recorrido que pueden usar ambos módulos

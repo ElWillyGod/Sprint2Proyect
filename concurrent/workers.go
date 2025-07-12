@@ -28,7 +28,7 @@ func NuevoWorkerBasico(numWorkers int) *WorkerBasico {
 	}
 }
 
-// CargarArchivos - carga archivos reutilizando tree.CargarPorLotes
+// CargarArchivos - carga archivos usando workers concurrentes
 func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *EstadisticasBasicas, error) {
 	inicio := time.Now()
 	stats := &EstadisticasBasicas{}
