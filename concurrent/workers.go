@@ -1,8 +1,6 @@
 package concurrent
 
 import (
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -30,16 +28,17 @@ func NuevoWorkerBasico(numWorkers int) *WorkerBasico {
 	}
 }
 
-// CargarArchivos - carga archivos de forma simple
+// CargarArchivos - carga archivos reutilizando tree.CargarPorLotes
 func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *EstadisticasBasicas, error) {
 	inicio := time.Now()
 	stats := &EstadisticasBasicas{}
+	var statsMutex sync.Mutex
 
-	// Canal simple
-	archivosChan := make(chan core.Archivo, 100)
+	// Canal para recibir archivos del recorrido
+	archivosChan := make(chan core.Archivo, 1000)
 	var wg sync.WaitGroup
 
-	// Workers simples
+	// Workers para procesar archivos
 	for i := 0; i < w.numWorkers; i++ {
 		wg.Add(1)
 		go func() {
@@ -48,30 +47,19 @@ func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *
 				w.mutex.Lock()
 				w.tree.Insertar(archivo)
 				w.mutex.Unlock()
+
+				statsMutex.Lock()
+				stats.TotalArchivos++
+				statsMutex.Unlock()
 			}
 		}()
 	}
 
-	// Recorrer directorio
+	// Usar la función genérica de recorrido
 	go func() {
 		defer close(archivosChan)
-
-		filepath.Walk(rutaDirectorio, func(ruta string, info os.FileInfo, err error) error {
-			if err != nil {
-				return nil
-			}
-
-			if !info.IsDir() {
-				archivo := core.Archivo{
-					NombreArchivo: info.Name(),
-					RutaCompleta:  ruta,
-				}
-
-				stats.TotalArchivos++
-				archivosChan <- archivo
-			}
-
-			return nil
+		core.RecorrerDirectorio(rutaDirectorio, func(archivo core.Archivo) {
+			archivosChan <- archivo
 		})
 	}()
 
