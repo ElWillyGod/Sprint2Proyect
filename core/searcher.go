@@ -24,22 +24,22 @@ func NuevoBuscador(tree *BPlusTree) *Buscador {
 }
 
 // Buscar archivos por nombre exacto
-func (b *Buscador) BuscarExacto(nombreArchivo string) []Archivo {
+func (b *Buscador) BuscarExacto(nombreArchivo string) ([]string, string) {
 	clave := strings.ToLower(nombreArchivo)
 	nodo := b.tree.EncontrarHoja(clave)
 
 	for _, entrada := range nodo.Entradas {
 		if entrada.Clave == clave {
-			return entrada.Archivos
+			return entrada.Rutas, entrada.Clave
 		}
 	}
 
-	return nil
+	return nil, ""
 }
 
 // Buscar archivos que contengan una subcadena
-func (b *Buscador) BuscarParcial(subcadena string) []Archivo {
-	var resultados []Archivo
+func (b *Buscador) BuscarParcial(subcadena string) []string {
+	var rutas []string
 	subcadena = strings.ToLower(subcadena)
 
 	// Recorrer todas las hojas usando los enlaces
@@ -47,11 +47,11 @@ func (b *Buscador) BuscarParcial(subcadena string) []Archivo {
 	for nodoActual != nil {
 		for _, entrada := range nodoActual.Entradas {
 			if strings.Contains(entrada.Clave, subcadena) {
-				resultados = append(resultados, entrada.Archivos...)
+				rutas = append(rutas, entrada.Rutas...)
 			}
 		}
 		nodoActual = nodoActual.Siguiente
 	}
 
-	return resultados
+	return rutas
 }

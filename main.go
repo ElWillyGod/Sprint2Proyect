@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -21,7 +22,7 @@ Solo búsqueda exacta y parcial.
 func main() {
 
 	// Establecer la ruta que quieres indexar (cámbiala aquí)
-	rutaAIndexar := "/usr" // <-- CAMBIA ESTA RUTA POR LA QUE QUIERAS
+	rutaAIndexar := "/home/willy" // <-- CAMBIA ESTA RUTA POR LA QUE QUIERAS
 
 	fmt.Printf("archivos desde: %s\n", rutaAIndexar)
 	fmt.Println("...")
@@ -100,14 +101,14 @@ func busquedaExacta(buscador *core.Buscador, scanner *bufio.Scanner) {
 	}
 
 	fmt.Printf("Buscando '%s'...\n", termino)
-	archivos := buscador.BuscarExacto(termino)
+	rutas, nombre := buscador.BuscarExacto(termino)
 
-	if len(archivos) == 0 {
+	if len(rutas) == 0 {
 		fmt.Printf("No se encontró el archivo '%s'\n", termino)
 	} else {
-		fmt.Printf("Se encontraron %d archivo(s) con el nombre '%s':\n", len(archivos), termino)
-		for i, archivo := range archivos {
-			fmt.Printf("  %d. %s\n     %s\n", i+1, archivo.NombreArchivo, archivo.RutaCompleta)
+		fmt.Printf("Se encontraron %d archivo(s) con el nombre '%s':\n", len(rutas), termino)
+		for i, ruta := range rutas {
+			fmt.Printf("  %d. %s\n     %s\n", i+1, nombre, ruta)
 		}
 	}
 }
@@ -125,22 +126,23 @@ func busquedaParcial(buscador *core.Buscador, scanner *bufio.Scanner) {
 	}
 
 	fmt.Printf("Buscando archivos que contengan '%s'...\n", termino)
-	archivos := buscador.BuscarParcial(termino)
+	rutas := buscador.BuscarParcial(termino)
 
-	if len(archivos) == 0 {
+	if len(rutas) == 0 {
 		fmt.Printf("No se encontraron archivos que contengan '%s'\n", termino)
 	} else {
-		fmt.Printf("Se encontraron %d archivo(s) que contienen '%s':\n", len(archivos), termino)
-		mostrarResultados(archivos, 10) // Mostrar máximo 10 resultados
+		fmt.Printf("Se encontraron %d archivo(s) que contienen '%s':\n", len(rutas), termino)
+		mostrarResultados(rutas, 10) // Mostrar máximo 10 resultados
 	}
 }
 
-func mostrarResultados(archivos []core.Archivo, limite int) {
-	for i, archivo := range archivos {
+func mostrarResultados(rutas []string, limite int) {
+	for i, ruta := range rutas {
 		if i >= limite {
-			fmt.Printf("... y %d archivo(s) más\n", len(archivos)-limite)
+			fmt.Printf("... y %d archivo(s) más\n", len(rutas)-limite)
 			break
 		}
-		fmt.Printf("  %d. 📄 %s\n     📍 %s\n", i+1, archivo.NombreArchivo, archivo.RutaCompleta)
+		nombre := filepath.Base(ruta)
+		fmt.Printf("  %d. 📄 %s\n     📍 %s\n", i+1, nombre, ruta)
 	}
 }
