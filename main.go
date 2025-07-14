@@ -70,7 +70,7 @@ func main() {
 		case "2":
 			busquedaParcial(buscador, scanner)
 		case "3":
-			fmt.Println("¡Hasta luego!")
+			fmt.Println("bye")
 			return
 		default:
 			fmt.Println("a pero sos bobo")
