@@ -1,8 +1,6 @@
 package core
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -15,9 +13,7 @@ const (
 	// Orden del B+ Tree - máximo número de hijos por nodo interno
 	ORDEN = 4
 	// Máximo número de entradas por hoja
-	MAX_ENTRADAS_HOJA = ORDEN - 1
-	// Máximo número de claves por nodo interno
-	MAX_CLAVES_INTERNO = ORDEN - 1
+	MAX_ENTRADAS = ORDEN - 1
 )
 
 type Archivo struct {
@@ -116,7 +112,7 @@ func (tree *BPlusTree) insertarEnHoja(nodo *Nodo, clave string, archivo Archivo)
 	nodo.Entradas[posicion] = nuevaEntrada
 
 	// Verificar si necesita división
-	if len(nodo.Entradas) > MAX_ENTRADAS_HOJA {
+	if len(nodo.Entradas) > MAX_ENTRADAS {
 		return tree.dividirHoja(nodo)
 	}
 
@@ -172,7 +168,7 @@ func (tree *BPlusTree) insertarClaveEnInterno(nodo *Nodo, clave string, nuevoHij
 	nodo.Hijos[posicion+1] = nuevoHijo
 
 	// Verificar si necesita división
-	if len(nodo.Claves) > MAX_CLAVES_INTERNO {
+	if len(nodo.Claves) > MAX_ENTRADAS {
 		return tree.dividirInterno(nodo)
 	}
 
@@ -202,7 +198,11 @@ func (tree *BPlusTree) dividirInterno(nodo *Nodo) (string, *Nodo) {
 	return clavePromovida, nuevoNodo
 }
 
-// Encontrar posición para insertar clave en nodo interno
+/*
+* implementar busqueda binaria para encontrar la posición de una clave en un nodo interno
+*
+*
+ */
 func (tree *BPlusTree) encontrarPosicionClaveInterna(claves []string, clave string) int {
 	for i, c := range claves {
 		if clave < c {
@@ -240,31 +240,4 @@ func (tree *BPlusTree) EncontrarPrimeraHoja() *Nodo {
 		nodo = nodo.Hijos[0]
 	}
 	return nodo
-}
-
-// Función genérica de recorrido que pueden usar ambos módulos
-func RecorrerDirectorio(rutaDir string, procesarArchivo func(Archivo)) error {
-	entradas, err := os.ReadDir(rutaDir)
-	if err != nil {
-		return err
-	}
-
-	for _, entrada := range entradas {
-		rutaCompleta := filepath.Join(rutaDir, entrada.Name())
-
-		if entrada.IsDir() {
-			// Recursión
-			if err := RecorrerDirectorio(rutaCompleta, procesarArchivo); err != nil {
-				return err
-			}
-		} else {
-			// Procesar archivo usando la función callback
-			archivo := Archivo{
-				NombreArchivo: entrada.Name(),
-				RutaCompleta:  rutaCompleta,
-			}
-			procesarArchivo(archivo)
-		}
-	}
-	return nil
 }

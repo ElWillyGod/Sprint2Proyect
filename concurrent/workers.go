@@ -1,10 +1,11 @@
 package concurrent
 
 import (
+	"Sprint2Proyect/core"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
-
-	"Sprint2Proyect/core"
 )
 
 // WorkerBasico - Version muy simple
@@ -14,13 +15,13 @@ type WorkerBasico struct {
 	mutex      sync.Mutex
 }
 
-// EstadisticasBasicas - Solo lo esencial
+// EstadisticasBasicas
 type EstadisticasBasicas struct {
 	TotalArchivos int
 	TiempoTotal   time.Duration
 }
 
-// NuevoWorkerBasico crea un worker simple
+// NuevoWorkerBasico crea un worker
 func NuevoWorkerBasico(numWorkers int) *WorkerBasico {
 	return &WorkerBasico{
 		tree:       core.NuevoBPlusTree(),
@@ -28,7 +29,7 @@ func NuevoWorkerBasico(numWorkers int) *WorkerBasico {
 	}
 }
 
-// CargarArchivos - carga archivos usando workers concurrentes optimizado
+// CargarArchivos - carga archivos usando workers
 func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *EstadisticasBasicas, error) {
 	inicio := time.Now()
 	stats := &EstadisticasBasicas{}
@@ -40,25 +41,23 @@ func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *
 
 	// Buffer para acumular archivos antes de insertar en lotes
 	const TAMAÑO_LOTE = 50
-	
+
 	// Workers para procesar archivos en lotes
 	for i := 0; i < w.numWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			lote := make([]core.Archivo, 0, TAMAÑO_LOTE)
-			
+
 			for archivo := range archivosChan {
 				lote = append(lote, archivo)
-				
-				// Procesar lote cuando esté lleno
+
 				if len(lote) >= TAMAÑO_LOTE {
 					w.insertarLote(lote, stats, &statsMutex)
-					lote = lote[:0] // Limpiar sin reallocar
+					lote = lote[:0]
 				}
 			}
-			
-			// Procesar lote final si no está vacío
+
 			if len(lote) > 0 {
 				w.insertarLote(lote, stats, &statsMutex)
 			}
@@ -68,7 +67,7 @@ func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *
 	// Usar la función genérica de recorrido
 	go func() {
 		defer close(archivosChan)
-		core.RecorrerDirectorio(rutaDirectorio, func(archivo core.Archivo) {
+		RecorrerDirectorio(rutaDirectorio, func(archivo core.Archivo) {
 			archivosChan <- archivo
 		})
 	}()
@@ -85,11 +84,38 @@ func (w *WorkerBasico) insertarLote(lote []core.Archivo, stats *EstadisticasBasi
 		w.tree.Insertar(archivo)
 	}
 	w.mutex.Unlock()
-	
+
 	// Actualizar estadísticas
 	statsMutex.Lock()
 	stats.TotalArchivos += len(lote)
 	statsMutex.Unlock()
+}
+
+// Función genérica de recorrido que pueden usar ambos módulos
+func RecorrerDirectorio(rutaDir string, procesarArchivo func(core.Archivo)) error {
+	entradas, err := os.ReadDir(rutaDir)
+	if err != nil {
+		return err
+	}
+
+	for _, entrada := range entradas {
+		rutaCompleta := filepath.Join(rutaDir, entrada.Name())
+
+		if entrada.IsDir() {
+			// Recursión
+			if err := RecorrerDirectorio(rutaCompleta, procesarArchivo); err != nil {
+				return err
+			}
+		} else {
+			// Procesar archivo usando la función callback
+			archivo := core.Archivo{
+				NombreArchivo: entrada.Name(),
+				RutaCompleta:  rutaCompleta,
+			}
+			procesarArchivo(archivo)
+		}
+	}
+	return nil
 }
 
 // Mantener la función simple para compatibilidad

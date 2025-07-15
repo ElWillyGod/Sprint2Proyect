@@ -23,7 +23,6 @@ func NuevoBuscador(tree *BPlusTree) *Buscador {
 	}
 }
 
-// Buscar archivos por nombre exacto
 func (b *Buscador) BuscarExacto(nombreArchivo string) ([]string, string) {
 	clave := strings.ToLower(nombreArchivo)
 	nodo := b.tree.EncontrarHoja(clave)
@@ -42,7 +41,6 @@ func (b *Buscador) BuscarParcial(subcadena string) []string {
 	var rutas []string
 	subcadena = strings.ToLower(subcadena)
 
-	// Recorrer todas las hojas usando los enlaces
 	nodoActual := b.tree.EncontrarPrimeraHoja()
 	for nodoActual != nil {
 		for _, entrada := range nodoActual.Entradas {

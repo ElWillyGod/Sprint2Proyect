@@ -29,3 +29,5 @@ la ultima comparacion de las hojas es la que es parcial y exacta o todo el recor
 solo las rutas, porque hacer distincion entre archivos y directorios
 
 batch insert -> tecnica de inserción por lotes para mejorar la velocidad de carga.
+lexograficamente tremenda palabra.(top 3)
+funciones anonimas, o lambdas en python
