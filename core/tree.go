@@ -9,17 +9,15 @@ Implementación completa de B+ Tree para almacenar los archivos y sus rutas.
 Con división de nodos y balanceo automático.
 */
 
+// Constantes de orden y entradas
 const (
-	// Orden del B+ Tree - máximo número de hijos por nodo interno
-	ORDEN = 4
-	// Máximo número de entradas por hoja
+	ORDEN        = 4
 	MAX_ENTRADAS = ORDEN - 1
 )
 
 type Archivo struct {
-	NombreArchivo string // Ej: "nota.txt"
-	RutaCompleta  string // Ej: "/home/willy/docs/nota.txt"
-
+	NombreArchivo string
+	RutaCompleta  string
 }
 
 type EntradaHoja struct {
@@ -27,7 +25,7 @@ type EntradaHoja struct {
 	Rutas []string
 }
 
-// dividir en dos nodos, uno hoja y otro interno
+// Posible implementacion de dos nodos
 type Nodo struct {
 	EsHoja bool
 
@@ -218,7 +216,7 @@ func (tree *BPlusTree) encontrarIndiceHijo(nodo *Nodo, clave string) int {
 			return i
 		}
 	}
-	return len(nodo.Claves) // último hijo
+	return len(nodo.Claves) // nada intuitivo
 }
 
 func (tree *BPlusTree) EncontrarHoja(clave string) *Nodo {
@@ -234,6 +232,7 @@ func (tree *BPlusTree) encontrarHoja(nodo *Nodo, clave string) *Nodo {
 	return tree.encontrarHoja(nodo.Hijos[indice], clave)
 }
 
+// para avanzar
 func (tree *BPlusTree) EncontrarPrimeraHoja() *Nodo {
 	nodo := tree.Raiz
 	for !nodo.EsHoja {

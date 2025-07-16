@@ -8,14 +8,13 @@ import (
 	"time"
 )
 
-// WorkerBasico - Version muy simple
+// WorkerBasico
 type WorkerBasico struct {
 	tree       *core.BPlusTree
 	numWorkers int
 	mutex      sync.Mutex
 }
 
-// EstadisticasBasicas
 type EstadisticasBasicas struct {
 	TotalArchivos int
 	TiempoTotal   time.Duration
@@ -29,20 +28,17 @@ func NuevoWorkerBasico(numWorkers int) *WorkerBasico {
 	}
 }
 
-// CargarArchivos - carga archivos usando workers
+// CargarArchivos
 func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *EstadisticasBasicas, error) {
 	inicio := time.Now()
 	stats := &EstadisticasBasicas{}
 	var statsMutex sync.Mutex
 
-	// Canal para recibir archivos del recorrido
 	archivosChan := make(chan core.Archivo, 1000)
 	var wg sync.WaitGroup
 
-	// Buffer para acumular archivos antes de insertar en lotes
 	const TAMAÑO_LOTE = 50
 
-	// Workers para procesar archivos en lotes
 	for i := 0; i < w.numWorkers; i++ {
 		wg.Add(1)
 		go func() {
@@ -64,7 +60,7 @@ func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *
 		}()
 	}
 
-	// Usar la función genérica de recorrido
+	// funcion fantasma jsj (funciones anonimas, lambda)
 	go func() {
 		defer close(archivosChan)
 		RecorrerDirectorio(rutaDirectorio, func(archivo core.Archivo) {
