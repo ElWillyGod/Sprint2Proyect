@@ -8,30 +8,29 @@ import (
 	"time"
 )
 
-// WorkerBasico
-type WorkerBasico struct {
+// Worker
+type Worker struct {
 	tree       *core.BPlusTree
 	numWorkers int
 	mutex      sync.Mutex
 }
 
-type EstadisticasBasicas struct {
+type Estadisticas struct {
 	TotalArchivos int
 	TiempoTotal   time.Duration
 }
 
-// NuevoWorkerBasico crea un worker
-func NuevoWorkerBasico(numWorkers int) *WorkerBasico {
-	return &WorkerBasico{
+// NuevoWorker crea un worker
+func NuevoWorker(numWorkers int) *Worker {
+	return &Worker{
 		tree:       core.NuevoBPlusTree(),
 		numWorkers: numWorkers,
 	}
 }
 
-// CargarArchivos
-func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *EstadisticasBasicas, error) {
+func (w *Worker) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *Estadisticas, error) {
 	inicio := time.Now()
-	stats := &EstadisticasBasicas{}
+	stats := &Estadisticas{}
 	var statsMutex sync.Mutex
 
 	archivosChan := make(chan core.Archivo, 1000)
@@ -60,7 +59,6 @@ func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *
 		}()
 	}
 
-	// funcion fantasma jsj (funciones anonimas, lambda)
 	go func() {
 		defer close(archivosChan)
 		RecorrerDirectorio(rutaDirectorio, func(archivo core.Archivo) {
@@ -73,21 +71,18 @@ func (w *WorkerBasico) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *
 	return w.tree, stats, nil
 }
 
-// Insertar un lote de archivos con una sola adquisición de mutex
-func (w *WorkerBasico) insertarLote(lote []core.Archivo, stats *EstadisticasBasicas, statsMutex *sync.Mutex) {
+func (w *Worker) insertarLote(lote []core.Archivo, stats *Estadisticas, statsMutex *sync.Mutex) {
 	w.mutex.Lock()
 	for _, archivo := range lote {
 		w.tree.Insertar(archivo)
 	}
 	w.mutex.Unlock()
 
-	// Actualizar estadísticas
 	statsMutex.Lock()
 	stats.TotalArchivos += len(lote)
 	statsMutex.Unlock()
 }
 
-// Función genérica de recorrido que pueden usar ambos módulos
 func RecorrerDirectorio(rutaDir string, procesarArchivo func(core.Archivo)) error {
 	entradas, err := os.ReadDir(rutaDir)
 	if err != nil {
@@ -98,12 +93,10 @@ func RecorrerDirectorio(rutaDir string, procesarArchivo func(core.Archivo)) erro
 		rutaCompleta := filepath.Join(rutaDir, entrada.Name())
 
 		if entrada.IsDir() {
-			// Recursión
 			if err := RecorrerDirectorio(rutaCompleta, procesarArchivo); err != nil {
 				return err
 			}
 		} else {
-			// Procesar archivo usando la función callback
 			archivo := core.Archivo{
 				NombreArchivo: entrada.Name(),
 				RutaCompleta:  rutaCompleta,
@@ -115,7 +108,7 @@ func RecorrerDirectorio(rutaDir string, procesarArchivo func(core.Archivo)) erro
 }
 
 // Mantener la función simple para compatibilidad
-func CargarArchivosSimple(rutaDirectorio string, numWorkers int) (*core.BPlusTree, *EstadisticasBasicas, error) {
-	worker := NuevoWorkerBasico(numWorkers)
+func CargarArchivosSimple(rutaDirectorio string, numWorkers int) (*core.BPlusTree, *Estadisticas, error) {
+	worker := NuevoWorker(numWorkers)
 	return worker.CargarArchivos(rutaDirectorio)
 }

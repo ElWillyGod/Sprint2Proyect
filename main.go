@@ -22,7 +22,7 @@ Solo búsqueda exacta y parcial.
 func main() {
 
 	// Establecer la ruta que quieres indexar (cámbiala aquí)
-	rutaAIndexar := "/home/willy" // <-- CAMBIA ESTA RUTA POR LA QUE QUIERAS
+	rutaAIndexar := "/home" // <-- CAMBIA ESTA RUTA POR LA QUE QUIERAS
 
 	fmt.Printf("archivos desde: %s\n", rutaAIndexar)
 	fmt.Println("...")

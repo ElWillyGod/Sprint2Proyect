@@ -55,11 +55,9 @@ func NuevoBPlusTree() *BPlusTree {
 func (tree *BPlusTree) Insertar(archivo Archivo) {
 	clave := strings.ToLower(archivo.NombreArchivo)
 
-	// Si la raíz se divide, necesitamos crear una nueva raíz
 	nuevaClave, nuevoNodo := tree.insertarEnNodo(tree.Raiz, clave, archivo)
 
 	if nuevoNodo != nil {
-		// La raíz se dividió, crear nueva raíz
 		nuevaRaiz := &Nodo{
 			EsHoja: false,
 			Claves: []string{nuevaClave},
@@ -74,12 +72,10 @@ func (tree *BPlusTree) insertarEnNodo(nodo *Nodo, clave string, archivo Archivo)
 	if nodo.EsHoja {
 		return tree.insertarEnHoja(nodo, clave, archivo)
 	} else {
-		// Encontrar el hijo correcto
 		indice := tree.encontrarIndiceHijo(nodo, clave)
 		clavePromovida, nuevoHijo := tree.insertarEnNodo(nodo.Hijos[indice], clave, archivo)
 
 		if nuevoHijo != nil {
-			// El hijo se dividió, insertar la clave promovida en este nodo
 			return tree.insertarClaveEnInterno(nodo, clavePromovida, nuevoHijo)
 		}
 
@@ -89,41 +85,27 @@ func (tree *BPlusTree) insertarEnNodo(nodo *Nodo, clave string, archivo Archivo)
 
 // Retorna (clave promovida, nuevo nodo) si hay división, ("", nil) si no
 func (tree *BPlusTree) insertarEnHoja(nodo *Nodo, clave string, archivo Archivo) (string, *Nodo) {
-	// Buscar si la clave ya existe
 	for i, entrada := range nodo.Entradas {
 		if entrada.Clave == clave {
 			nodo.Entradas[i].Rutas = append(nodo.Entradas[i].Rutas, archivo.RutaCompleta)
 			return "", nil
 		}
 	}
-
-	// Crear nueva entrada
 	nuevaEntrada := EntradaHoja{
 		Clave: clave,
 		Rutas: []string{archivo.RutaCompleta},
 	}
 
-	// Insertar manteniendo orden
 	posicion := tree.encontrarPosicionInsercion(nodo.Entradas, clave)
 	nodo.Entradas = append(nodo.Entradas, EntradaHoja{})
 	copy(nodo.Entradas[posicion+1:], nodo.Entradas[posicion:])
 	nodo.Entradas[posicion] = nuevaEntrada
 
-	// Verificar si necesita división
 	if len(nodo.Entradas) > MAX_ENTRADAS {
 		return tree.dividirHoja(nodo)
 	}
 
 	return "", nil
-}
-
-func (tree *BPlusTree) encontrarPosicionInsercion(entradas []EntradaHoja, clave string) int {
-	for i, entrada := range entradas {
-		if clave < entrada.Clave {
-			return i
-		}
-	}
-	return len(entradas)
 }
 
 // Dividir una hoja cuando excede el máximo de entradas
@@ -137,14 +119,11 @@ func (tree *BPlusTree) dividirHoja(nodo *Nodo) (string, *Nodo) {
 		Siguiente: nodo.Siguiente,
 	}
 
-	// Mover la mitad de las entradas al nuevo nodo
 	copy(nuevoNodo.Entradas, nodo.Entradas[medio:])
 
-	// Mantener enlaces entre hojas
 	nodo.Siguiente = nuevoNodo
 	nodo.Entradas = nodo.Entradas[:medio]
 
-	// La clave promovida es la primera clave del nuevo nodo
 	clavePromovida := nuevoNodo.Entradas[0].Clave
 
 	return clavePromovida, nuevoNodo
@@ -152,20 +131,16 @@ func (tree *BPlusTree) dividirHoja(nodo *Nodo) (string, *Nodo) {
 
 // Insertar clave en nodo interno después de división de hijo
 func (tree *BPlusTree) insertarClaveEnInterno(nodo *Nodo, clave string, nuevoHijo *Nodo) (string, *Nodo) {
-	// Insertar la clave en la posición correcta
 	posicion := tree.encontrarPosicionClaveInterna(nodo.Claves, clave)
 
-	// Insertar clave
 	nodo.Claves = append(nodo.Claves, "")
 	copy(nodo.Claves[posicion+1:], nodo.Claves[posicion:])
 	nodo.Claves[posicion] = clave
 
-	// Insertar hijo (después de la clave insertada)
 	nodo.Hijos = append(nodo.Hijos, nil)
 	copy(nodo.Hijos[posicion+2:], nodo.Hijos[posicion+1:])
 	nodo.Hijos[posicion+1] = nuevoHijo
 
-	// Verificar si necesita división
 	if len(nodo.Claves) > MAX_ENTRADAS {
 		return tree.dividirInterno(nodo)
 	}
@@ -173,50 +148,68 @@ func (tree *BPlusTree) insertarClaveEnInterno(nodo *Nodo, clave string, nuevoHij
 	return "", nil
 }
 
-// Dividir un nodo interno cuando excede el máximo de claves
 func (tree *BPlusTree) dividirInterno(nodo *Nodo) (string, *Nodo) {
 	medio := len(nodo.Claves) / 2
 	clavePromovida := nodo.Claves[medio]
 
-	// Crear nuevo nodo hermano
 	nuevoNodo := &Nodo{
 		EsHoja: false,
 		Claves: make([]string, len(nodo.Claves)-medio-1),
 		Hijos:  make([]*Nodo, len(nodo.Hijos)-medio-1),
 	}
 
-	// Mover claves e hijos al nuevo nodo
 	copy(nuevoNodo.Claves, nodo.Claves[medio+1:])
 	copy(nuevoNodo.Hijos, nodo.Hijos[medio+1:])
 
-	// Truncar el nodo original
 	nodo.Claves = nodo.Claves[:medio]
 	nodo.Hijos = nodo.Hijos[:medio+1]
 
 	return clavePromovida, nuevoNodo
 }
 
-/*
-* implementar busqueda binaria para encontrar la posición de una clave en un nodo interno
-*
-*
- */
-func (tree *BPlusTree) encontrarPosicionClaveInterna(claves []string, clave string) int {
-	for i, c := range claves {
-		if clave < c {
-			return i
+func (tree *BPlusTree) encontrarPosicionInsercion(entradas []EntradaHoja, clave string) int {
+	izquierda, derecha := 0, len(entradas)
+	
+	for izquierda < derecha {
+		medio := (izquierda + derecha) / 2
+		if clave < entradas[medio].Clave {
+			derecha = medio
+		} else {
+			izquierda = medio + 1
 		}
 	}
-	return len(claves)
+	
+	return izquierda
+}
+
+func (tree *BPlusTree) encontrarPosicionClaveInterna(claves []string, clave string) int {
+	izquierda, derecha := 0, len(claves)
+	
+	for izquierda < derecha {
+		medio := (izquierda + derecha) / 2
+		if clave < claves[medio] {
+			derecha = medio
+		} else {
+			izquierda = medio + 1
+		}
+	}
+	
+	return izquierda
 }
 
 func (tree *BPlusTree) encontrarIndiceHijo(nodo *Nodo, clave string) int {
-	for i, c := range nodo.Claves {
-		if clave < c {
-			return i
+	izquierda, derecha := 0, len(nodo.Claves)
+	
+	for izquierda < derecha {
+		medio := (izquierda + derecha) / 2
+		if clave < nodo.Claves[medio] {
+			derecha = medio
+		} else {
+			izquierda = medio + 1
 		}
 	}
-	return len(nodo.Claves) // nada intuitivo
+	
+	return izquierda
 }
 
 func (tree *BPlusTree) EncontrarHoja(clave string) *Nodo {
@@ -239,4 +232,25 @@ func (tree *BPlusTree) EncontrarPrimeraHoja() *Nodo {
 		nodo = nodo.Hijos[0]
 	}
 	return nodo
+}
+
+func (tree *BPlusTree) buscarEnHoja(nodo *Nodo, clave string) []string {
+	izquierda, derecha := 0, len(nodo.Entradas)
+	
+	// Búsqueda binaria
+	for izquierda < derecha {
+		medio := (izquierda + derecha) / 2
+		if nodo.Entradas[medio].Clave < clave {
+			izquierda = medio + 1
+		} else {
+			derecha = medio
+		}
+	}
+	
+	// Verificar si encontramos la clave exacta
+	if izquierda < len(nodo.Entradas) && nodo.Entradas[izquierda].Clave == clave {
+		return nodo.Entradas[izquierda].Rutas
+	}
+	
+	return nil
 }

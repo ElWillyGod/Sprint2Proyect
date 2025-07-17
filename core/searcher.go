@@ -27,16 +27,14 @@ func (b *Buscador) BuscarExacto(nombreArchivo string) ([]string, string) {
 	clave := strings.ToLower(nombreArchivo)
 	nodo := b.tree.EncontrarHoja(clave)
 
-	for _, entrada := range nodo.Entradas {
-		if entrada.Clave == clave {
-			return entrada.Rutas, entrada.Clave
-		}
+	rutas := b.tree.buscarEnHoja(nodo, clave)
+	if rutas != nil {
+		return rutas, clave
 	}
 
 	return nil, ""
 }
 
-// Buscar archivos que contengan una subcadena
 func (b *Buscador) BuscarParcial(subcadena string) []string {
 	var rutas []string
 	subcadena = strings.ToLower(subcadena)
