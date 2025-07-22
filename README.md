@@ -1,4 +1,4 @@
-# 🚀 Sprint2Proyect
+# 🚀 WillyFE
 
 <div align="center">
 
@@ -16,7 +16,7 @@
 
 ## 📋 Descripción
 
-Sprint2Proyect es un explorador de archivos concurrente que utiliza una estructura de datos B+ Tree para indexar y buscar archivos de manera eficiente. El sistema aprovecha las capacidades de concurrencia de Go mediante goroutines y canales para lograr un rendimiento óptimo.
+WillyFE es un explorador de archivos concurrente que utiliza una estructura de datos B+ Tree para indexar y buscar archivos de manera eficiente. El sistema aprovecha las capacidades de concurrencia de Go mediante goroutines y canales para lograr un rendimiento óptimo.
 
 ## ✨ Características
 
