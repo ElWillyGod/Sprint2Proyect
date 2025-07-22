@@ -5,18 +5,16 @@ import (
 )
 
 /*
-Implementación simplificada de un buscador de archivos utilizando el B+ Tree.
-Solo dos tipos de búsqueda:
-1. Búsqueda exacta: se busca el nombre del archivo completo.
-2. Búsqueda parcial: se busca el nombre del archivo que contenga una subcadena.
-*/
+* implementación simplificada de un buscador de archivos utilizando el B+ Tree.
+* solo dos tipos de búsqueda:
+* 1. búsqueda exacta: se busca el nombre del archivo completo.
+* 2. búsqueda parcial: se busca el nombre del archivo que contenga una subcadena.
+ */
 
-// Buscador que opera sobre un B+ Tree
 type Buscador struct {
 	tree *BPlusTree
 }
 
-// Constructor del buscador
 func NuevoBuscador(tree *BPlusTree) *Buscador {
 	return &Buscador{
 		tree: tree,
@@ -24,6 +22,7 @@ func NuevoBuscador(tree *BPlusTree) *Buscador {
 }
 
 func (b *Buscador) BuscarExacto(nombreArchivo string) ([]string, string) {
+
 	clave := strings.ToLower(nombreArchivo)
 	nodo := b.tree.EncontrarHoja(clave)
 

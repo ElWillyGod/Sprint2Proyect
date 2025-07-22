@@ -31,3 +31,8 @@ solo las rutas, porque hacer distincion entre archivos y directorios
 batch insert -> tecnica de inserción por lotes para mejorar la velocidad de carga.
 lexograficamente tremenda palabra.(top 3)
 funciones anonimas, o lambdas en python
+
+
+Guion:
+
+bueno, espero que recuerden mi nombre, sino van a tener que adivinar, no se si alguno usa windows 11 de forma diaria o almenos 3 veces por semana, si si lo usan no se si se an dado cuenta de que el explorador de archivos es exageradamente lento, y eso me molesta, por eso decidi hacer un explorador de archivos que sea mas rapido que el de microsoft, 

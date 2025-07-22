@@ -5,11 +5,10 @@ import (
 )
 
 /*
-Implementación completa de B+ Tree para almacenar los archivos y sus rutas.
-Con división de nodos y balanceo automático.
-*/
+* implementación completa de B+ Tree para almacenar los archivos y sus rutas.
+* con división de nodos.
+ */
 
-// Constantes de orden y entradas
 const (
 	ORDEN        = 4
 	MAX_ENTRADAS = ORDEN - 1
@@ -25,7 +24,7 @@ type EntradaHoja struct {
 	Rutas []string
 }
 
-// Posible implementacion de dos nodos
+// ver de usar dos tipos de nodos
 type Nodo struct {
 	EsHoja bool
 
@@ -67,7 +66,10 @@ func (tree *BPlusTree) Insertar(archivo Archivo) {
 	}
 }
 
-// Retorna (clave promovida, nuevo nodo) si hay división, (nil, nil) si no
+/*
+* Retorna (clave promovida, nuevo nodo) si hay división
+* (nil, nil) si no
+ */
 func (tree *BPlusTree) insertarEnNodo(nodo *Nodo, clave string, archivo Archivo) (string, *Nodo) {
 	if nodo.EsHoja {
 		return tree.insertarEnHoja(nodo, clave, archivo)
@@ -83,7 +85,10 @@ func (tree *BPlusTree) insertarEnNodo(nodo *Nodo, clave string, archivo Archivo)
 	}
 }
 
-// Retorna (clave promovida, nuevo nodo) si hay división, ("", nil) si no
+/*
+* retorna (clave promovida, nuevo nodo) si hay división
+* ("", nil) si no
+ */
 func (tree *BPlusTree) insertarEnHoja(nodo *Nodo, clave string, archivo Archivo) (string, *Nodo) {
 	for i, entrada := range nodo.Entradas {
 		if entrada.Clave == clave {
@@ -108,7 +113,9 @@ func (tree *BPlusTree) insertarEnHoja(nodo *Nodo, clave string, archivo Archivo)
 	return "", nil
 }
 
-// Dividir una hoja cuando excede el máximo de entradas
+/*
+* dividir una hoja cuando excede el máximo de entradas
+ */
 func (tree *BPlusTree) dividirHoja(nodo *Nodo) (string, *Nodo) {
 	medio := (len(nodo.Entradas) + 1) / 2
 
@@ -129,7 +136,9 @@ func (tree *BPlusTree) dividirHoja(nodo *Nodo) (string, *Nodo) {
 	return clavePromovida, nuevoNodo
 }
 
-// Insertar clave en nodo interno después de división de hijo
+/*
+* insertar clave en nodo interno después de división de hijo
+ */
 func (tree *BPlusTree) insertarClaveEnInterno(nodo *Nodo, clave string, nuevoHijo *Nodo) (string, *Nodo) {
 	posicion := tree.encontrarPosicionClaveInterna(nodo.Claves, clave)
 
@@ -169,7 +178,7 @@ func (tree *BPlusTree) dividirInterno(nodo *Nodo) (string, *Nodo) {
 
 func (tree *BPlusTree) encontrarPosicionInsercion(entradas []EntradaHoja, clave string) int {
 	izquierda, derecha := 0, len(entradas)
-	
+
 	for izquierda < derecha {
 		medio := (izquierda + derecha) / 2
 		if clave < entradas[medio].Clave {
@@ -178,13 +187,13 @@ func (tree *BPlusTree) encontrarPosicionInsercion(entradas []EntradaHoja, clave 
 			izquierda = medio + 1
 		}
 	}
-	
+
 	return izquierda
 }
 
 func (tree *BPlusTree) encontrarPosicionClaveInterna(claves []string, clave string) int {
 	izquierda, derecha := 0, len(claves)
-	
+
 	for izquierda < derecha {
 		medio := (izquierda + derecha) / 2
 		if clave < claves[medio] {
@@ -193,13 +202,13 @@ func (tree *BPlusTree) encontrarPosicionClaveInterna(claves []string, clave stri
 			izquierda = medio + 1
 		}
 	}
-	
+
 	return izquierda
 }
 
 func (tree *BPlusTree) encontrarIndiceHijo(nodo *Nodo, clave string) int {
 	izquierda, derecha := 0, len(nodo.Claves)
-	
+
 	for izquierda < derecha {
 		medio := (izquierda + derecha) / 2
 		if clave < nodo.Claves[medio] {
@@ -208,7 +217,7 @@ func (tree *BPlusTree) encontrarIndiceHijo(nodo *Nodo, clave string) int {
 			izquierda = medio + 1
 		}
 	}
-	
+
 	return izquierda
 }
 
@@ -236,8 +245,7 @@ func (tree *BPlusTree) EncontrarPrimeraHoja() *Nodo {
 
 func (tree *BPlusTree) buscarEnHoja(nodo *Nodo, clave string) []string {
 	izquierda, derecha := 0, len(nodo.Entradas)
-	
-	// Búsqueda binaria
+
 	for izquierda < derecha {
 		medio := (izquierda + derecha) / 2
 		if nodo.Entradas[medio].Clave < clave {
@@ -246,11 +254,10 @@ func (tree *BPlusTree) buscarEnHoja(nodo *Nodo, clave string) []string {
 			derecha = medio
 		}
 	}
-	
-	// Verificar si encontramos la clave exacta
+
 	if izquierda < len(nodo.Entradas) && nodo.Entradas[izquierda].Clave == clave {
 		return nodo.Entradas[izquierda].Rutas
 	}
-	
+
 	return nil
 }

@@ -20,7 +20,6 @@ type Estadisticas struct {
 	TiempoTotal   time.Duration
 }
 
-// NuevoWorker crea un worker
 func NuevoWorker(numWorkers int) *Worker {
 	return &Worker{
 		tree:       core.NuevoBPlusTree(),
@@ -36,18 +35,18 @@ func (w *Worker) CargarArchivos(rutaDirectorio string) (*core.BPlusTree, *Estadi
 	archivosChan := make(chan core.Archivo, 1000)
 	var wg sync.WaitGroup
 
-	const TAMAÑO_LOTE = 50
+	const TAMANIO_LOTE = 50
 
 	for i := 0; i < w.numWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			lote := make([]core.Archivo, 0, TAMAÑO_LOTE)
+			lote := make([]core.Archivo, 0, TAMANIO_LOTE)
 
 			for archivo := range archivosChan {
 				lote = append(lote, archivo)
 
-				if len(lote) >= TAMAÑO_LOTE {
+				if len(lote) >= TAMANIO_LOTE {
 					w.insertarLote(lote, stats, &statsMutex)
 					lote = lote[:0]
 				}

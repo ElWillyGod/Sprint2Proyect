@@ -21,8 +21,10 @@ Solo búsqueda exacta y parcial.
 
 func main() {
 
-	// Establecer la ruta que quieres indexar (cámbiala aquí)
-	rutaAIndexar := "/home" // <-- CAMBIA ESTA RUTA POR LA QUE QUIERAS
+	//////////////////////////////////////////////////////////////////
+	rutaAIndexar := "/home/willy"
+
+	///////////////////////////////////////////////////////////////////
 
 	fmt.Printf("archivos desde: %s\n", rutaAIndexar)
 	fmt.Println("...")
@@ -44,17 +46,13 @@ func main() {
 		log.Fatal("Error cargando directorio:", err)
 	}
 
-	// Crear el buscador
 	buscador := core.NuevoBuscador(tree)
 
-	// Mostrar estadísticas simples
 	fmt.Printf("se cargaron %d archivos en %v\n", stats.TotalArchivos, stats.TiempoTotal)
 	fmt.Printf("%.0f archivos/seg\n\n", float64(stats.TotalArchivos)/stats.TiempoTotal.Seconds())
 
-	// Scanner para leer entrada del usuario
 	scanner := bufio.NewScanner(os.Stdin)
 
-	// Menú interactivo simple
 	for {
 		mostrarMenuSimple()
 
