@@ -29,7 +29,7 @@ WillyFE es un explorador de archivos concurrente que utiliza una estructura de d
 ## 🏗️ Estructura del Proyecto
 
 ```
-Sprint2Proyect/
+WillyFE/
 ├── 📄 main.go             # Lógica de arranque del explorador
 ├── 🎯 core/               # Lógica principal del sistema
 │   ├── tree.go            # Implementación del B+ Tree
@@ -51,8 +51,8 @@ Sprint2Proyect/
 
 1. **Clona el repositorio**
    ```bash
-   git clone https://github.com/ElWillyGod/Sprint2Proyect.git
-   cd Sprint2Proyect
+   git clone https://github.com/ElWillyGod/WillyFE.git
+   cd WillyFE
    ```
 
 2. **Instala las dependencias**
